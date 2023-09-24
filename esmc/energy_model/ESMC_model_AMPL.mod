@@ -138,6 +138,8 @@ param share_freight_boat_min{REGIONS}  >= 0, <= 1; # %_boat,min [-]: min limit f
 param share_freight_boat_max{REGIONS}  >= 0, <= 1; # %_boat,min [-]: max limit for penetration of boat in freight transportation
 param share_freight_road_min{REGIONS}  >= 0, <= 1; # %_road,min [-]: min limit for penetration of truck in freight transportation
 param share_freight_road_max{REGIONS}  >= 0, <= 3; # %_road,min [-]: max limit for penetration of truck in freight transportation
+param share_freight_air_min{REGIONS}  >= 0, <= 1; # %_air,min [-]: min limit for penetration of aircraft in freight transportation
+param share_freight_air_max{REGIONS}  >= 0, <= 1; # %_air,min [-]: max limit for penetration of aircraft in freight transportation
 param share_ned {REGIONS, END_USES_TYPES_OF_CATEGORY["NON_ENERGY"]} >= 0, <= 1; # %_ned [-] share of non-energy demand per type of feedstocks.
 
 
@@ -196,6 +198,7 @@ var Share_mobility_public{c in REGIONS} >= share_mobility_public_min[c], <= shar
 var Share_freight_train{c in REGIONS}, >= share_freight_train_min[c], <= share_freight_train_max[c]; # %_Rail: Ratio [0; 1] rail transport over total freight transport
 var Share_freight_road{c in REGIONS}, >= share_freight_road_min[c], <= share_freight_road_max[c]; # %_Road: Ratio [0; 1] Road transport over total freight transport
 var Share_freight_boat{c in REGIONS}, >= share_freight_boat_min[c], <= share_freight_boat_max[c]; # %_Boat: Ratio [0; 1] boat transport over total freight transport
+var Share_freight_air{c in REGIONS}, >= share_freight_air_min[c], <= share_freight_air_max[c]; # %_Air: Ratio [0; 1] air transport over total freight transport
 var Share_heat_dhn{c in REGIONS}, >= share_heat_dhn_min[c], <= share_heat_dhn_max[c]; # %_DHN: Ratio [0; 1] centralized over total low-temperature heat
 var F {REGIONS, TECHNOLOGIES} >= 0; # F: Installed capacity ([GW]) with respect to main output (see layers_in_out). [GWh] for STORAGE_TECH.
 var F_t {REGIONS, TECHNOLOGIES, HOURS, TYPICAL_DAYS} >= 0; # F_t: Operation in each period [GW] or, for STORAGE_TECH, storage level [GWh]. multiplication factor with respect to the values in layers_in_out table. Takes into account c_p
@@ -260,6 +263,8 @@ subject to end_uses_t {c in REGIONS, l in LAYERS, h in HOURS, td in TYPICAL_DAYS
 			(end_uses_input[c,"MOBILITY_FREIGHT"]   * mob_freight_time_series [c, h, td] / t_op [h, td] ) *  Share_freight_road[c]
 		else (if l == "MOB_FREIGHT_BOAT" then
 			(end_uses_input[c,"MOBILITY_FREIGHT"]   * mob_freight_time_series [c, h, td] / t_op [h, td] ) *  Share_freight_boat[c]
+		else (if l == "MOB_FREIGHT_AIR" then
+			(end_uses_input[c,"MOBILITY_FREIGHT"]   * mob_freight_time_series [c, h, td] / t_op [h, td] ) *  Share_freight_air[c]
 		else (if l == "HEAT_HIGH_T" then
 			end_uses_input[c,l] / total_time
 		else (if l == "SPACE_COOLING" then
@@ -273,7 +278,7 @@ subject to end_uses_t {c in REGIONS, l in LAYERS, h in HOURS, td in TYPICAL_DAYS
 		else (if l == "METHANOL" then
 			end_uses_input[c, "NON_ENERGY"] * share_ned [c, "METHANOL"] / total_time
 		else 
-			0 )))))))))))))); # For all layers which don't have an end-use demand
+			0 ))))))))))))))); # For all layers which don't have an end-use demand
 
 
 ## Cost
@@ -434,8 +439,8 @@ subject to operating_strategy_mobility_freight{c in REGIONS, j in TECHNOLOGIES_O
 	F_t [c, j, h, td]   = Shares_mobility_freight [c,j] * (end_uses_input[c,"MOBILITY_FREIGHT"] * mob_freight_time_series [c, h, td] / t_op [h, td] );
 
 # [Eq. 26] To impose a constant share in the mobility
-subject to Freight_shares {c in REGIONS} :
-	Share_freight_train[c] + Share_freight_road[c] + Share_freight_boat[c] = sum{j in TECHNOLOGIES_OF_END_USES_CATEGORY["MOBILITY_FREIGHT"]} (Shares_mobility_freight [c,j]); # =1 should work... But don't know why it doesn't
+subject to Freight_shares {c in REGIONS: end_uses_input[c,"MOBILITY_FREIGHT"] > 0} :
+	Share_freight_train[c] + Share_freight_road[c] + Share_freight_boat[c] + Share_freight_air[c] = sum{j in TECHNOLOGIES_OF_END_USES_CATEGORY["MOBILITY_FREIGHT"]} (Shares_mobility_freight [c,j]); # =1 should work... But don't know why it doesn't
 
 	
 ## Thermal solar & thermal storage:
@@ -606,7 +611,7 @@ subject to freight_of_exchanges_border{c1 in REGIONS, c2 in REGIONS} :
 	Exch_freight_border[c1,c2] = dist[c1,c2] * sum{r in EXCHANGE_FREIGHT_R, t in PERIODS, h in HOUR_OF_PERIOD[t], td in TYPICAL_DAY_OF_PERIOD[t]}((Exch_imp[c1,c2,r,h,td] + Exch_exp[c1,c2,r,h,td])/lhv[r]);
 subject to freight_of_exchanges{c1 in REGIONS} :
 	Exch_freight[c1] = sum{c2 in REGIONS} Exch_freight_border[c1,c2]/2;
-subject to additional_freight{c in REGIONS} :
+subject to additional_freight{c in REGIONS: end_uses_input[c,"MOBILITY_FREIGHT"] > 0} :
 	sum{j in TECHNOLOGIES_OF_END_USES_CATEGORY["MOBILITY_FREIGHT"]} (Shares_mobility_freight [c,j]) = (Exch_freight[c] + end_uses_input[c,"MOBILITY_FREIGHT"])/(end_uses_input[c,"MOBILITY_FREIGHT"]);
 
 

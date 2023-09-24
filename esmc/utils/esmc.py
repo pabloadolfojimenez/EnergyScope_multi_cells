@@ -102,7 +102,9 @@ class Esmc:
         return
 
     # TODO add an automated initialization for specific pipeline
-
+    def delete_if_exists(path):
+        if path.exists():
+            shutil.rmtree(path)
     def init_regions(self):
         logging.info('Initialising regions: ' + ', '.join(self.regions_names))
         data_dir = self.project_dir / 'Data' / str(self.year)

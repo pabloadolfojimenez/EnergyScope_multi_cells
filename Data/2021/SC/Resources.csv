@@ -1,0 +1,11 @@
+;;;Local availability;Exterior availability;Direct and indirect emissions for local resource;Price for local resource;
+;;units;[GWh/y];[GWh/y];[ktCO2-eq./GWh];[Meuro/GWh];
+Category;Subcategory;parameter name;avail_local;avail_exterior;gwp_op_local;c_op_local;Comment
+Renewable;Biomass;WOOD;72900;0;0.0118;0.016980597;
+Renewable;Biomass;WET_BIOMASS;21141.14981;0;0.0118;0.010318121;
+Non-renewable;Other non-renewable;WASTE;0;0;0.1501;0.021187834;
+Non-renewable;Fossil fuel;GAS;13610.21781;100000;0.2666;0.010662519;
+Non-renewable;Fossil fuel;GASOLINE;7815.790519;100000;0.3448;0.124118331;
+Non-renewable;Fossil fuel;DIESEL;3214.179104;100000;0.3148;0.111311495;
+Non-renewable;Fossil fuel;LFO;723.438837;100000;0.3115;0.085115655;
+Non-renewable;Fossil fuel;LPG;2657.707299;100000;0.28360908;0.021578745;
